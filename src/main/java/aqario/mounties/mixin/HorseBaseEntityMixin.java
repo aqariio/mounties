@@ -5,6 +5,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.HorseBaseEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
@@ -48,10 +49,8 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
         if (primaryPassenger instanceof PlayerEntity player) {
             float strafingMovement = player.sidewaysSpeed * 0.25F;
 
-            if (this.getWorld().isClient) {
-                if (this.getVelocity().horizontalLength() <= 0 && strafingMovement != 0 && !this.isAngry()) {
-                    this.rear();
-                }
+            if (mounties$prevSpeedPercent <= 0 && strafingMovement != 0 && !this.isAngry()) {
+                this.rear();
             }
 
             double deltaRotRaw = Math.atan(.05 / Math.abs(mounties$prevSpeedPercent)) * 180 / Math.PI;
@@ -76,12 +75,6 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
         double maxSpeedScaleBack = 0.25;
         double acc = maxSpeedScale * 0.05;
 
-        if (this.getWorld().isClient) {
-            if (this.getVelocity().horizontalLength() <= 0 && forwardMovement < 0 && !this.isAngry()) {
-                this.rear();
-            }
-        }
-
         if (forwardMovement > 0 && mounties$prevSpeedPercent < maxSpeedScale) {
             mounties$prevSpeedPercent = Math.min(maxSpeedScale, mounties$prevSpeedPercent + acc);
         }
@@ -91,6 +84,12 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
 
         if (Math.abs(mounties$prevSpeedPercent) < 0.05) {
             mounties$prevSpeedPercent *= 0.95;
+        }
+
+        mounties$prevSpeedPercent = Math.max(mounties$prevSpeedPercent, 0);
+        player.sendMessage(Text.literal(mounties$prevSpeedPercent + ""), true);
+        if (mounties$prevSpeedPercent <= 0 && forwardMovement < 0 && !this.isAngry()) {
+            this.rear();
         }
 
         cir.setReturnValue(new Vec3d(0, 0, mounties$prevSpeedPercent));
