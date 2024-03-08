@@ -1,0 +1,36 @@
+{
+    "schema_version": 1,
+    "quilt_loader": {
+        "group": "aqario.mounties",
+        "id": "mounties",
+        "version": "${version}",
+        "metadata": {
+            "name": "Mounties",
+            "description": "Mount and blade style horses",
+            "contributors": {
+                "aqario": "Author"
+            },
+            "license": "CC0-1.0",
+            "icon": "assets/mounties/icon.png"
+        },
+        "intermediate_mappings": "net.fabricmc:intermediary",
+        "entrypoints": {
+            "init": "aqario.mounties.common.Mounties"
+        },
+        "depends": [
+            {
+                "id": "quilt_loader",
+                "versions": ">=0.22.0-"
+            },
+            {
+                "id": "quilted_fabric_api",
+                "versions": ">=4.0.0-"
+            },
+            {
+                "id": "minecraft",
+                "versions": ">=1.19.2"
+            }
+        ]
+    },
+    "mixin": "mounties.mixins.json"
+}
