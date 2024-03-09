@@ -5,7 +5,6 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.HorseBaseEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
@@ -45,7 +44,7 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
     protected abstract void initCustomGoals();
 
     @Inject(at = @At(value = "HEAD"), method = "getRotationsFromRider", cancellable = true)
-    private void mounties$alteredControls(LivingEntity primaryPassenger, CallbackInfoReturnable<Vec2f> cir) {
+    private void mounties$rotation(LivingEntity primaryPassenger, CallbackInfoReturnable<Vec2f> cir) {
         if (primaryPassenger instanceof PlayerEntity player) {
             float strafingMovement = player.sidewaysSpeed * 0.25F;
 
@@ -53,18 +52,18 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
                 this.rear();
             }
 
-            double deltaRotRaw = Math.atan(.05 / Math.abs(mounties$prevSpeedPercent)) * 180 / Math.PI;
-            double deltaRot = Math.min(deltaRotRaw, 4);
+            double rotation = Math.atan(0.01 / Math.abs(mounties$prevSpeedPercent)) * 180 / Math.PI;
+            double clampedRotation = Math.min(rotation, 4);
             if (Math.abs(strafingMovement) == 0) {
-                deltaRot = 0;
+                clampedRotation = 0;
             }
 
-            cir.setReturnValue(new Vec2f(primaryPassenger.getPitch() * 0.5F, (float) (this.getYaw() + (deltaRot * (strafingMovement < 0 ? 1:-1)))));
+            cir.setReturnValue(new Vec2f(primaryPassenger.getPitch() * 0.5F, (float) (this.getYaw() + (clampedRotation * (strafingMovement < 0 ? 1:-1)))));
         }
     }
 
     @Inject(at = @At(value = "HEAD"), method = "getControlledMovementInput", cancellable = true)
-    private void mounties$alteredControls(PlayerEntity player, Vec3d input, CallbackInfoReturnable<Vec3d> cir) {
+    private void mounties$acceleration(PlayerEntity player, Vec3d input, CallbackInfoReturnable<Vec3d> cir) {
         if (this.isOnGround() && this.jumpStrength == 0.0F && this.isAngry() && !this.jumping) {
             cir.setReturnValue(Vec3d.ZERO);
             return;
@@ -73,13 +72,13 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
 
         double maxSpeedScale = 1;
         double maxSpeedScaleBack = 0.25;
-        double acc = maxSpeedScale * 0.05;
+        double acceleration = maxSpeedScale * 0.05;
 
         if (forwardMovement > 0 && mounties$prevSpeedPercent < maxSpeedScale) {
-            mounties$prevSpeedPercent = Math.min(maxSpeedScale, mounties$prevSpeedPercent + acc);
+            mounties$prevSpeedPercent = Math.min(maxSpeedScale, mounties$prevSpeedPercent + acceleration);
         }
         else if (forwardMovement < 0 && mounties$prevSpeedPercent > -maxSpeedScaleBack) {
-            mounties$prevSpeedPercent = Math.max(-maxSpeedScaleBack, mounties$prevSpeedPercent - acc);
+            mounties$prevSpeedPercent = Math.max(-maxSpeedScaleBack, mounties$prevSpeedPercent - acceleration);
         }
 
         if (Math.abs(mounties$prevSpeedPercent) < 0.05) {
@@ -87,7 +86,6 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
         }
 
         mounties$prevSpeedPercent = Math.max(mounties$prevSpeedPercent, 0);
-        player.sendMessage(Text.literal(mounties$prevSpeedPercent + ""), true);
         if (mounties$prevSpeedPercent <= 0 && forwardMovement < 0 && !this.isAngry()) {
             this.rear();
         }
@@ -96,7 +94,7 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
     }
 
     @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/passive/HorseBaseEntity;canRear()Z"), method = "initGoals", cancellable = true)
-    private void mounties$cancelRearing(CallbackInfo ci) {
+    private void mounties$cancelBucking(CallbackInfo ci) {
         this.initCustomGoals();
         ci.cancel();
     }
@@ -104,11 +102,11 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
     @Override
     public void onPassengerLookAround(Entity passenger) {
         super.onPassengerLookAround(passenger);
-        this.copyEntityData(passenger);
+        this.clampPassengerYaw(passenger);
     }
 
     @Unique
-    private void copyEntityData(Entity entity) {
+    private void clampPassengerYaw(Entity entity) {
         entity.setBodyYaw(this.getYaw());
         float f = MathHelper.wrapDegrees(entity.getYaw() - this.getYaw());
         float g = MathHelper.clamp(f, -150.0F, 150.0F);
