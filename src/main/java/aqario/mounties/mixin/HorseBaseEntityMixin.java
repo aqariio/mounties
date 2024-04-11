@@ -17,6 +17,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.function.IntUnaryOperator;
+
 @Mixin(HorseBaseEntity.class)
 public abstract class HorseBaseEntityMixin extends LivingEntity {
     @Shadow
@@ -42,6 +44,11 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
 
     @Shadow
     protected abstract void initCustomGoals();
+
+    @Inject(at = @At(value = "HEAD"), method = "getChildHealthBonus(Ljava/util/function/IntUnaryOperator;)F", cancellable = true)
+    private static void mounties$modifyHealth(IntUnaryOperator randomIntGetter, CallbackInfoReturnable<Float> cir) {
+        cir.setReturnValue(40.0F + (float)randomIntGetter.applyAsInt(8) + (float)randomIntGetter.applyAsInt(9));
+    }
 
     @Inject(at = @At(value = "HEAD"), method = "getRotationsFromRider", cancellable = true)
     private void mounties$rotation(LivingEntity primaryPassenger, CallbackInfoReturnable<Vec2f> cir) {
