@@ -45,7 +45,7 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
     @Shadow
     protected abstract void initCustomGoals();
 
-    @Inject(at = @At(value = "HEAD"), method = "getChildHealthBonus(Ljava/util/function/IntUnaryOperator;)F", cancellable = true)
+    @Inject(at = @At(value = "HEAD"), method = "getChildHealthBonus", cancellable = true)
     private static void mounties$modifyHealth(IntUnaryOperator randomIntGetter, CallbackInfoReturnable<Float> cir) {
         cir.setReturnValue(40.0F + (float)randomIntGetter.applyAsInt(8) + (float)randomIntGetter.applyAsInt(9));
     }
@@ -53,19 +53,19 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
     @Inject(at = @At(value = "HEAD"), method = "getRotationsFromRider", cancellable = true)
     private void mounties$rotation(LivingEntity primaryPassenger, CallbackInfoReturnable<Vec2f> cir) {
         if (primaryPassenger instanceof PlayerEntity player) {
-            float strafingMovement = player.sidewaysSpeed * 0.25F;
+            float sidewaysMovement = player.sidewaysSpeed * 0.25F;
 
-            if (mounties$prevSpeedPercent <= 0 && strafingMovement != 0 && !this.isAngry()) {
+            if (mounties$prevSpeedPercent <= 0 && sidewaysMovement != 0 && !this.isAngry()) {
                 this.rear();
             }
 
-            double rotation = Math.atan(0.01 / Math.abs(mounties$prevSpeedPercent)) * 180 / Math.PI;
+            double rotation = Math.atan(0.01 / Math.abs(this.getVelocity().horizontalLength())) * 180 / Math.PI;
             double clampedRotation = Math.min(rotation, 4);
-            if (Math.abs(strafingMovement) == 0) {
+            if (Math.abs(sidewaysMovement) == 0) {
                 clampedRotation = 0;
             }
 
-            cir.setReturnValue(new Vec2f(primaryPassenger.getPitch() * 0.5F, (float) (this.getYaw() + (clampedRotation * (strafingMovement < 0 ? 1:-1)))));
+            cir.setReturnValue(new Vec2f(primaryPassenger.getPitch() * 0.5F, (float) (this.getYaw() + (clampedRotation * (sidewaysMovement < 0 ? 1 : -1)))));
         }
     }
 
@@ -77,15 +77,15 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
         }
         float forwardMovement = player.forwardSpeed;
 
-        double maxSpeedScale = 1;
-        double maxSpeedScaleBack = 0.25;
-        double acceleration = maxSpeedScale * 0.05;
+        double maxForwardSpeed = 1;
+        double maxBackwardSpeed = 0.25;
+        double acceleration = maxForwardSpeed * 0.025;
 
-        if (forwardMovement > 0 && mounties$prevSpeedPercent < maxSpeedScale) {
-            mounties$prevSpeedPercent = Math.min(maxSpeedScale, mounties$prevSpeedPercent + acceleration);
+        if (forwardMovement > 0 && mounties$prevSpeedPercent < maxForwardSpeed) {
+            mounties$prevSpeedPercent = Math.min(maxForwardSpeed, mounties$prevSpeedPercent + acceleration / (1 + this.getVelocity().horizontalLength() * 2));
         }
-        else if (forwardMovement < 0 && mounties$prevSpeedPercent > -maxSpeedScaleBack) {
-            mounties$prevSpeedPercent = Math.max(-maxSpeedScaleBack, mounties$prevSpeedPercent - acceleration);
+        else if (forwardMovement < 0 && mounties$prevSpeedPercent > -maxBackwardSpeed) {
+            mounties$prevSpeedPercent = Math.max(-maxBackwardSpeed, mounties$prevSpeedPercent - acceleration);
         }
 
         if (Math.abs(mounties$prevSpeedPercent) < 0.05) {
