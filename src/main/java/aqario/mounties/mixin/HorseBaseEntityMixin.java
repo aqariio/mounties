@@ -3,8 +3,10 @@ package aqario.mounties.mixin;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.passive.HorseBaseEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
@@ -46,7 +48,7 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
     protected abstract void initCustomGoals();
 
     @Inject(at = @At(value = "HEAD"), method = "getChildHealthBonus", cancellable = true)
-    private static void mounties$modifyHealth(IntUnaryOperator randomIntGetter, CallbackInfoReturnable<Float> cir) {
+    private static void mounties$modifyMaxHealth(IntUnaryOperator randomIntGetter, CallbackInfoReturnable<Float> cir) {
         cir.setReturnValue(40.0F + (float)randomIntGetter.applyAsInt(8) + (float)randomIntGetter.applyAsInt(9));
     }
 
@@ -77,27 +79,32 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
         }
         float forwardMovement = player.forwardSpeed;
 
-        double maxForwardSpeed = 1;
-        double maxBackwardSpeed = 0.25;
-        double acceleration = maxForwardSpeed * 0.025;
+        double maxSpeed = 1;
+        double minSpeed = 0;
+        double acceleration = maxSpeed * 0.025;
 
-        if (forwardMovement > 0 && mounties$prevSpeedPercent < maxForwardSpeed) {
-            mounties$prevSpeedPercent = Math.min(maxForwardSpeed, mounties$prevSpeedPercent + acceleration / (1 + this.getVelocity().horizontalLength() * 4));
+        if (forwardMovement > 0 && mounties$prevSpeedPercent < maxSpeed) {
+            mounties$prevSpeedPercent = Math.min(maxSpeed, mounties$prevSpeedPercent + acceleration / (1 + mounties$prevSpeedPercent * 4));
         }
-        else if (forwardMovement < 0 && mounties$prevSpeedPercent > -maxBackwardSpeed) {
-            mounties$prevSpeedPercent = Math.max(-maxBackwardSpeed, mounties$prevSpeedPercent - acceleration / (1 + this.getVelocity().horizontalLength()));
+        else if (forwardMovement < 0 && mounties$prevSpeedPercent > -minSpeed) {
+            mounties$prevSpeedPercent = Math.max(-minSpeed, mounties$prevSpeedPercent - acceleration / (1 + mounties$prevSpeedPercent));
         }
 
         if (Math.abs(mounties$prevSpeedPercent) < 0.05) {
             mounties$prevSpeedPercent *= 0.95;
         }
-
+        player.sendMessage(Text.literal(String.valueOf(mounties$prevSpeedPercent)), true);
         mounties$prevSpeedPercent = Math.max(mounties$prevSpeedPercent, 0);
         if (mounties$prevSpeedPercent <= 0 && forwardMovement < 0 && !this.isAngry()) {
             this.rear();
         }
 
         cir.setReturnValue(new Vec3d(0, 0, mounties$prevSpeedPercent));
+    }
+
+    @Override
+    public boolean damage(DamageSource source, float amount) {
+        return super.damage(source, amount);
     }
 
     @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/passive/HorseBaseEntity;canRear()Z"), method = "initGoals", cancellable = true)
