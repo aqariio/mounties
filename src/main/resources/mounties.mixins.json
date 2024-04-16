@@ -4,6 +4,7 @@
   "package": "aqario.mounties.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "EnchantmentHelperMixin",
     "HorseBaseEntityMixin"
   ],
   "client": [

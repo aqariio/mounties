@@ -59,7 +59,7 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
                 this.rear();
             }
 
-            double rotation = Math.atan(0.01 / Math.abs(this.getVelocity().horizontalLength())) * 180 / Math.PI;
+            double rotation = Math.atan(0.01 / Math.abs(this.getVelocity().horizontalLength() * 2)) * 180 / Math.PI;
             double clampedRotation = Math.min(rotation, 4);
             if (Math.abs(sidewaysMovement) == 0) {
                 clampedRotation = 0;
@@ -82,10 +82,10 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
         double acceleration = maxForwardSpeed * 0.025;
 
         if (forwardMovement > 0 && mounties$prevSpeedPercent < maxForwardSpeed) {
-            mounties$prevSpeedPercent = Math.min(maxForwardSpeed, mounties$prevSpeedPercent + acceleration / (1 + this.getVelocity().horizontalLength() * 2));
+            mounties$prevSpeedPercent = Math.min(maxForwardSpeed, mounties$prevSpeedPercent + acceleration / (1 + this.getVelocity().horizontalLength() * 4));
         }
         else if (forwardMovement < 0 && mounties$prevSpeedPercent > -maxBackwardSpeed) {
-            mounties$prevSpeedPercent = Math.max(-maxBackwardSpeed, mounties$prevSpeedPercent - acceleration);
+            mounties$prevSpeedPercent = Math.max(-maxBackwardSpeed, mounties$prevSpeedPercent - acceleration / (1 + this.getVelocity().horizontalLength()));
         }
 
         if (Math.abs(mounties$prevSpeedPercent) < 0.05) {
