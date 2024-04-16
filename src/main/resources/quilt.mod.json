@@ -6,7 +6,7 @@
         "version": "${version}",
         "metadata": {
             "name": "Mounties",
-            "description": "Improving horses since 2024",
+            "description": "Improves handling and base stats of horses",
             "contributors": {
                 "aqario": "Author"
             },

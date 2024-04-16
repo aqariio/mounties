@@ -6,7 +6,6 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.passive.HorseBaseEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
@@ -93,7 +92,6 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
         if (Math.abs(mounties$prevSpeedPercent) < 0.05) {
             mounties$prevSpeedPercent *= 0.95;
         }
-        player.sendMessage(Text.literal(String.valueOf(mounties$prevSpeedPercent)), true);
         mounties$prevSpeedPercent = Math.max(mounties$prevSpeedPercent, 0);
         if (mounties$prevSpeedPercent <= 0 && forwardMovement < 0 && !this.isAngry()) {
             this.rear();
