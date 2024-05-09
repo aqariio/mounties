@@ -29,12 +29,7 @@ public abstract class LeavesBlockMixin extends Block implements Waterloggable {
     @Override
     public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
         if (entity instanceof LivingEntity && entity.getType() != EntityType.FOX && entity.getType() != EntityType.BEE) {
-            entity.setVelocity(entity.getVelocity().multiply(
-                new Vec3d(0.9, 0.9, 0.9)
-                .multiply(
-                    new Vec3d(1 + entity.getVelocity().length() * 2, 1 + entity.getVelocity().length() * 2, 1 + entity.getVelocity().length() * 2)
-                )
-            ));
+            entity.setVelocity(entity.getVelocity().multiply(new Vec3d(0.9, 0.9, 0.9)));
         }
     }
 }
