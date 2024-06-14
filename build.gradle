@@ -1,6 +1,6 @@
 plugins {
     id 'maven-publish'
-    id 'org.quiltmc.loom' version '1.4.+'
+    id 'org.quiltmc.loom' version '1.+'
 }
 
 archivesBaseName = project.archives_base_name
@@ -8,6 +8,13 @@ version = "${project.version}+${project.minecraft_version}"
 group = project.maven_group
 
 repositories {
+    maven {
+        name = "TerraformersMC"
+        url = "https://maven.terraformersmc.com/"
+    }
+    maven {
+        url = "https://api.modrinth.com/maven"
+    }
 }
 
 dependencies {
@@ -23,7 +30,13 @@ dependencies {
     // Quilted Fabric API will automatically pull in the correct QSL version.
     modImplementation "org.quiltmc.quilted-fabric-api:quilted-fabric-api:${project.quilted_fabric_api_version}-${project.minecraft_version}"
 
-// modImplementation libs.bundles.quilted.fabric.api // If you wish to use Fabric API's deprecated modules, you can replace the above line with this one
+    // Mod Menu
+    modImplementation ("com.terraformersmc:modmenu:${project.modmenu_version}") {
+        transitive = false
+    }
+
+    // MidnightLib
+    modImplementation include("maven.modrinth:midnightlib:${project.midnightlib_version}")
 }
 
 processResources {

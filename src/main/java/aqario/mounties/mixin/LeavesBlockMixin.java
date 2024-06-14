@@ -1,5 +1,6 @@
 package aqario.mounties.mixin;
 
+import aqario.mounties.common.config.MountiesConfig;
 import net.minecraft.block.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -20,7 +21,7 @@ public abstract class LeavesBlockMixin extends Block implements Waterloggable {
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-        if (context.isAbove(VoxelShapes.fullCube(), pos, true) && !(world.getBlockState(pos.up()).getBlock() instanceof LeavesBlock)) {
+        if (!MountiesConfig.removeLeavesCollision || (context.isAbove(VoxelShapes.fullCube(), pos, true) && !(world.getBlockState(pos.up()).getBlock() instanceof LeavesBlock))) {
             return VoxelShapes.fullCube();
         }
         return VoxelShapes.empty();
@@ -28,6 +29,9 @@ public abstract class LeavesBlockMixin extends Block implements Waterloggable {
 
     @Override
     public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
+        if (!MountiesConfig.removeLeavesCollision) {
+            return;
+        }
         if (entity instanceof LivingEntity && entity.getType() != EntityType.FOX && entity.getType() != EntityType.BEE) {
             entity.setVelocity(entity.getVelocity().multiply(
                 new Vec3d(0.9, 0.9, 0.9)
