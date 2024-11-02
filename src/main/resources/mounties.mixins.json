@@ -6,7 +6,8 @@
   "mixins": [
     "EnchantmentHelperMixin",
     "HorseBaseEntityMixin",
-    "LeavesBlockMixin"
+    "LeavesBlockMixin",
+    "LivingEntityMixin"
   ],
   "client": [
   ],
