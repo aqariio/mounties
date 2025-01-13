@@ -1,8 +1,7 @@
 package aqario.mounties.common;
 
 import aqario.mounties.common.config.MountiesConfig;
-import org.quiltmc.loader.api.ModContainer;
-import org.quiltmc.qsl.base.api.entrypoint.ModInitializer;
+import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,8 +10,8 @@ public class Mounties implements ModInitializer {
     public static final String ID = "mounties";
 
     @Override
-    public void onInitialize(ModContainer mod) {
-        LOGGER.info("Loading {}", mod.metadata().name());
+    public void onInitialize() {
+        LOGGER.info("Loading Mounties");
         MountiesConfig.init(ID, MountiesConfig.class);
     }
 }

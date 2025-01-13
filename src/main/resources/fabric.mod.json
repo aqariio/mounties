@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "mounties",
+  "version": "${version}",
+  "name": "Mounties",
+  "description": "Improves handling and base stats of horses",
+  "authors": [
+    "aqario"
+  ],
+  "contact": {
+    "sources": "https://github.com/aqariio/mounties",
+    "issues": "https://github.com/aqariio/mounties/issues"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/mounties/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "aqario.mounties.common.Mounties"
+    ]
+  },
+  "mixins": [
+    "mounties.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.5",
+    "minecraft": ">=1.21",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

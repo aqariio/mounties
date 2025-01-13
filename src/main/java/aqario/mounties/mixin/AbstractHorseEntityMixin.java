@@ -4,7 +4,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.passive.HorseBaseEntity;
+import net.minecraft.entity.passive.AbstractHorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
@@ -20,8 +20,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.function.IntUnaryOperator;
 
-@Mixin(HorseBaseEntity.class)
-public abstract class HorseBaseEntityMixin extends LivingEntity {
+@Mixin(AbstractHorseEntity.class)
+public abstract class AbstractHorseEntityMixin extends LivingEntity {
     @Shadow
     protected float jumpStrength;
     @Shadow
@@ -30,34 +30,34 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
     @Unique
     private double mounties$prevSpeedPercent = 0F;
 
-    protected HorseBaseEntityMixin(EntityType<? extends LivingEntity> type, World world) {
+    protected AbstractHorseEntityMixin(EntityType<? extends LivingEntity> type, World world) {
         super(type, world);
     }
 
     @Shadow
-    public abstract LivingEntity getPrimaryPassenger();
+    public abstract LivingEntity getControllingPassenger();
 
     @Shadow
     public abstract boolean isAngry();
 
     @Shadow
-    public abstract void rear();
+    public abstract void updateAnger();
 
     @Shadow
     protected abstract void initCustomGoals();
 
     @Inject(at = @At(value = "HEAD"), method = "getChildHealthBonus", cancellable = true)
     private static void mounties$modifyMaxHealth(IntUnaryOperator randomIntGetter, CallbackInfoReturnable<Float> cir) {
-        cir.setReturnValue(40.0F + (float)randomIntGetter.applyAsInt(8) + (float)randomIntGetter.applyAsInt(9));
+        cir.setReturnValue(40.0F + (float) randomIntGetter.applyAsInt(8) + (float) randomIntGetter.applyAsInt(9));
     }
 
-    @Inject(at = @At(value = "HEAD"), method = "getRotationsFromRider", cancellable = true)
+    @Inject(at = @At(value = "HEAD"), method = "getControlledRotation", cancellable = true)
     private void mounties$rotation(LivingEntity primaryPassenger, CallbackInfoReturnable<Vec2f> cir) {
         if (primaryPassenger instanceof PlayerEntity player) {
             float sidewaysMovement = player.sidewaysSpeed * 0.25F;
 
             if (mounties$prevSpeedPercent <= 0 && sidewaysMovement != 0 && !this.isAngry()) {
-                this.rear();
+                this.updateAnger();
             }
 
             double rotation = Math.atan(0.02 / Math.abs(this.getVelocity().horizontalLength() * 2)) * 180 / Math.PI;
@@ -94,7 +94,7 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
         }
         mounties$prevSpeedPercent = Math.max(mounties$prevSpeedPercent, 0);
         if (mounties$prevSpeedPercent <= 0 && forwardMovement < 0 && !this.isAngry()) {
-            this.rear();
+            this.updateAnger();
         }
 
         cir.setReturnValue(new Vec3d(0, 0, mounties$prevSpeedPercent));
@@ -105,7 +105,7 @@ public abstract class HorseBaseEntityMixin extends LivingEntity {
         return super.damage(source, amount);
     }
 
-    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/passive/HorseBaseEntity;canRear()Z"), method = "initGoals", cancellable = true)
+    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/passive/AbstractHorseEntity;shouldAmbientStand()Z"), method = "initGoals", cancellable = true)
     private void mounties$cancelBucking(CallbackInfo ci) {
         this.initCustomGoals();
         ci.cancel();
