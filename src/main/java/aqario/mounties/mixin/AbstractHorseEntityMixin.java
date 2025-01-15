@@ -30,6 +30,9 @@ public abstract class AbstractHorseEntityMixin extends LivingEntity {
     @Unique
     private double mounties$prevSpeedPercent = 0F;
 
+    @Unique
+    private boolean mounties$angryHeld = false;
+
     protected AbstractHorseEntityMixin(EntityType<? extends LivingEntity> type, World world) {
         super(type, world);
     }
@@ -41,10 +44,10 @@ public abstract class AbstractHorseEntityMixin extends LivingEntity {
     public abstract boolean isAngry();
 
     @Shadow
-    public abstract void updateAnger();
+    protected abstract void initCustomGoals();
 
     @Shadow
-    protected abstract void initCustomGoals();
+    public abstract void playAngrySound();
 
     @Inject(at = @At(value = "HEAD"), method = "getChildHealthBonus", cancellable = true)
     private static void mounties$modifyMaxHealth(IntUnaryOperator randomIntGetter, CallbackInfoReturnable<Float> cir) {
@@ -56,11 +59,7 @@ public abstract class AbstractHorseEntityMixin extends LivingEntity {
         if (primaryPassenger instanceof PlayerEntity player) {
             float sidewaysMovement = player.sidewaysSpeed * 0.25F;
 
-            if (mounties$prevSpeedPercent <= 0 && sidewaysMovement != 0 && !this.isAngry()) {
-                this.updateAnger();
-            }
-
-            double rotation = Math.atan(0.02 / Math.abs(this.getVelocity().horizontalLength() * 2)) * 180 / Math.PI;
+            double rotation = Math.atan(0.04 / Math.abs(this.getVelocity().horizontalLength() * 2)) * 180 / Math.PI;
             double clampedRotation = Math.min(rotation, 5);
             if (Math.abs(sidewaysMovement) == 0) {
                 clampedRotation = 0;
@@ -80,21 +79,29 @@ public abstract class AbstractHorseEntityMixin extends LivingEntity {
 
         double maxSpeed = 1;
         double minSpeed = 0;
-        double acceleration = maxSpeed * 0.025;
+        double acceleration = maxSpeed * 0.06;
 
+        // acceleration
         if (forwardMovement > 0 && mounties$prevSpeedPercent < maxSpeed) {
             mounties$prevSpeedPercent = Math.min(maxSpeed, mounties$prevSpeedPercent + acceleration / (1 + mounties$prevSpeedPercent * 4));
         }
+        // deceleration
         else if (forwardMovement < 0 && mounties$prevSpeedPercent > -minSpeed) {
-            mounties$prevSpeedPercent = Math.max(-minSpeed, mounties$prevSpeedPercent - acceleration / (1 + mounties$prevSpeedPercent / 2));
+            mounties$prevSpeedPercent = Math.max(-minSpeed, mounties$prevSpeedPercent - acceleration / (1 + mounties$prevSpeedPercent / 5));
         }
 
         if (Math.abs(mounties$prevSpeedPercent) < 0.05) {
             mounties$prevSpeedPercent *= 0.95;
         }
         mounties$prevSpeedPercent = Math.max(mounties$prevSpeedPercent, 0);
-        if (mounties$prevSpeedPercent <= 0 && forwardMovement < 0 && !this.isAngry()) {
-            this.updateAnger();
+        if (forwardMovement >= 0) {
+            mounties$angryHeld = false;
+        }
+        if (forwardMovement < 0 && !mounties$angryHeld) {
+            mounties$angryHeld = true;
+            if (mounties$prevSpeedPercent <= 0 && !this.isAngry()) {
+                this.playAngrySound();
+            }
         }
 
         cir.setReturnValue(new Vec3d(0, 0, mounties$prevSpeedPercent));
