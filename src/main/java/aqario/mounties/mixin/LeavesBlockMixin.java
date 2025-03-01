@@ -14,7 +14,6 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 
-@SuppressWarnings("deprecation")
 @Mixin(LeavesBlock.class)
 public abstract class LeavesBlockMixin extends Block implements Waterloggable {
     public LeavesBlockMixin(Settings settings) {
@@ -28,11 +27,14 @@ public abstract class LeavesBlockMixin extends Block implements Waterloggable {
         }
         if (context instanceof EntityShapeContext entityContext) {
             Entity entity = entityContext.getEntity();
-            if (context.isAbove(VoxelShapes.fullCube(), pos, true) && !(world.getBlockState(pos.up()).getBlock() instanceof LeavesBlock) && entity != null && entity.fallDistance < 2.5F) {
-                return VoxelShapes.fullCube();
+            if (!context.isAbove(VoxelShapes.fullCube(), pos, true)
+                || world.getBlockState(pos.up()).getBlock() instanceof LeavesBlock
+                || (entity != null && entity.fallDistance > 2.5F)
+            ) {
+                return VoxelShapes.empty();
             }
         }
-        return VoxelShapes.empty();
+        return VoxelShapes.fullCube();
     }
 
     @Override
