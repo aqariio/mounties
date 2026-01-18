@@ -1,6 +1,5 @@
 package aqario.mounties.mixin;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -65,10 +64,10 @@ public abstract class LivingEntityMixin extends Entity {
     @Inject(method = "floatInWaterWhileRidden", at = @At("HEAD"), cancellable = true)
     private void mounties$onlySwimWhenUnsupported(CallbackInfo ci) {
         LivingEntity entity = (LivingEntity) (Object) this;
-        BlockPos pos = this.blockPosition();
         if (entity instanceof AbstractHorse
             && !entity.isUnderWater()
-            && this.level().getBlockState(pos.below()).isSolidRender()
+            && this.level().getBlockStates(this.getBoundingBox().move(0, -1, 0))
+            .anyMatch(BlockBehaviour.BlockStateBase::isSolidRender)
         ) {
             ci.cancel();
         }
