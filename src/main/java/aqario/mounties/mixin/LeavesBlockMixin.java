@@ -1,52 +1,65 @@
 package aqario.mounties.mixin;
 
 import aqario.mounties.common.config.MountiesConfig;
-import net.minecraft.block.*;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.EntityCollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(LeavesBlock.class)
-public abstract class LeavesBlockMixin extends Block implements Waterloggable {
-    public LeavesBlockMixin(Settings settings) {
-        super(settings);
+public abstract class LeavesBlockMixin extends Block implements SimpleWaterloggedBlock {
+    public LeavesBlockMixin(Properties properties) {
+        super(properties);
     }
 
     @Override
-    public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         if (!MountiesConfig.removeLeavesCollision) {
-            return super.getCollisionShape(state, world, pos, context);
+            return super.getCollisionShape(state, level, pos, context);
         }
-        if (context instanceof EntityShapeContext entityContext) {
+        if (context instanceof EntityCollisionContext entityContext) {
             Entity entity = entityContext.getEntity();
-            if (!context.isAbove(VoxelShapes.fullCube(), pos, true)
-                || world.getBlockState(pos.up()).getBlock() instanceof LeavesBlock
+            if (!context.isAbove(Shapes.block(), pos, true)
+                || level.getBlockState(pos.above()).getBlock() instanceof LeavesBlock
                 || (entity != null && entity.fallDistance > 2.5F)
             ) {
-                return VoxelShapes.empty();
+                return Shapes.empty();
             }
         }
-        return VoxelShapes.fullCube();
+        return Shapes.block();
     }
 
     @Override
-    public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
+    public void entityInside(
+        BlockState blockState,
+        Level level,
+        BlockPos pos,
+        Entity entity,
+        InsideBlockEffectApplier insideBlockEffectApplier,
+        boolean bl
+    ) {
         if (!MountiesConfig.removeLeavesCollision) {
             return;
         }
-        if (entity instanceof PlayerEntity player && player.getAbilities().flying) {
+        if (entity instanceof Player player && player.getAbilities().flying) {
             return;
         }
         if (entity instanceof LivingEntity && entity.getType() != EntityType.FOX && entity.getType() != EntityType.BEE) {
-            entity.setVelocity(entity.getVelocity().multiply(new Vec3d(0.9, 0.9, 0.9)));
+            entity.setDeltaMovement(entity.getDeltaMovement().multiply(new Vec3(0.9, 0.9, 0.9)));
         }
     }
 }

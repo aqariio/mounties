@@ -1,16 +1,17 @@
 package aqario.mounties.mixin;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.EntityAttribute;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.passive.AbstractHorseEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,41 +22,55 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity {
-    protected LivingEntityMixin(EntityType<? extends LivingEntity> entityType, World world) {
-        super(entityType, world);
+    protected LivingEntityMixin(EntityType<? extends LivingEntity> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Unique
     public boolean shouldStepDown() {
-        BlockPos pos = this.getBlockPos();
-        return !this.isOnGround()
+        return !this.onGround()
             && this.fallDistance > 0f
             && this.fallDistance < 0.3f
-            && !this.getWorld().getBlockState(pos.down()).getCollisionShape(this.getWorld(), pos.down()).isEmpty();
-//            || !this.getWorld().getBlockState(pos.down(2)).getCollisionShape(this.getWorld(), pos.down(2)).isEmpty();
+            && this.level().getBlockStates(this.getBoundingBox().move(0, -1, 0))
+            .anyMatch(BlockBehaviour.BlockStateBase::isSolidRender);
     }
 
-    @Inject(method = "travelControlled", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;travel(Lnet/minecraft/util/math/Vec3d;)V"))
-    private void mounties$stepDownwards(PlayerEntity player, Vec3d input, CallbackInfo ci) {
+    @Inject(method = "travelRidden", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;travel(Lnet/minecraft/world/phys/Vec3;)V"))
+    private void mounties$stepDownwards(Player player, Vec3 input, CallbackInfo ci) {
         LivingEntity entity = (LivingEntity) (Object) this;
-        if (entity instanceof AbstractHorseEntity && this.getControllingPassenger() instanceof PlayerEntity && this.shouldStepDown()) {
-            this.addVelocity(new Vec3d(0, -1, 0));
+        if (entity instanceof AbstractHorse
+            && this.getControllingPassenger() instanceof Player
+            && this.shouldStepDown()
+        ) {
+            this.addDeltaMovement(new Vec3(0, -1, 0));
         }
     }
 
-    @Inject(method = "getOffGroundSpeed", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getFlyingSpeed", at = @At("RETURN"), cancellable = true)
     private void mounties$increaseAirSpeed(CallbackInfoReturnable<Float> cir) {
         LivingEntity entity = (LivingEntity) (Object) this;
-        if (entity instanceof AbstractHorseEntity && this.getControllingPassenger() instanceof PlayerEntity) {
-            cir.setReturnValue(entity.getMovementSpeed() * 0.216f);
+        if (entity instanceof AbstractHorse && this.getControllingPassenger() instanceof Player) {
+            cir.setReturnValue(entity.getSpeed() * 0.216f);
         }
     }
 
-    @Redirect(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getAttributeValue(Lnet/minecraft/registry/entry/RegistryEntry;)D"))
-    private double mounties$modifySwimSpeed(LivingEntity entity, RegistryEntry<EntityAttribute> attribute) {
-        if (entity instanceof AbstractHorseEntity && entity.isOnGround() && !entity.isSubmergedInWater()) {
+    @Redirect(method = "travelInWater", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getAttributeValue(Lnet/minecraft/core/Holder;)D"))
+    private double mounties$modifySwimSpeed(LivingEntity entity, Holder<Attribute> attribute) {
+        if (entity instanceof AbstractHorse && entity.onGround() && !entity.isUnderWater()) {
             return 0.8;
         }
-        return entity.getAttributeValue(EntityAttributes.GENERIC_WATER_MOVEMENT_EFFICIENCY);
+        return entity.getAttributeValue(Attributes.WATER_MOVEMENT_EFFICIENCY);
+    }
+
+    @Inject(method = "floatInWaterWhileRidden", at = @At("HEAD"), cancellable = true)
+    private void mounties$onlySwimWhenUnsupported(CallbackInfo ci) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        BlockPos pos = this.blockPosition();
+        if (entity instanceof AbstractHorse
+            && !entity.isUnderWater()
+            && this.level().getBlockState(pos.below()).isSolidRender()
+        ) {
+            ci.cancel();
+        }
     }
 }

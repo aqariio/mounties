@@ -4,7 +4,7 @@
   "package": "aqario.mounties.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "AbstractHorseEntityMixin",
+    "AbstractHorseMixin",
     "LeavesBlockMixin",
     "LivingEntityMixin",
     "SweetBerryBushBlockMixin"
