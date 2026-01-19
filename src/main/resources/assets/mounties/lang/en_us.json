@@ -1,4 +1,5 @@
 {
   "mounties.midnightconfig.title": "Mounties Config",
-  "mounties.midnightconfig.removeLeavesCollision": "Remove sideways collision from leaves"
+  "mounties.midnightconfig.removeLeavesCollision": "Remove sideways collision from leaves",
+  "mounties.midnightconfig.horseMaxHealth": "Horse max health"
 }

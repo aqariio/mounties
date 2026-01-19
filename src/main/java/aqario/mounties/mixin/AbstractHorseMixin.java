@@ -51,9 +51,6 @@ public abstract class AbstractHorseMixin extends LivingEntity implements HorseCo
     @Shadow
     public abstract boolean isStanding();
 
-    @Shadow
-    public abstract void makeMad();
-
     @Override
     public double mounties$speedPercent() {
         return mounties$speedPercent;
