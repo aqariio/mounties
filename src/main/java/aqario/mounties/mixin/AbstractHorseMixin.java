@@ -53,8 +53,10 @@ public abstract class AbstractHorseMixin extends LivingEntity {
         if (primaryPassenger instanceof Player player) {
             float sidewaysInput = -Math.signum(player.xxa);
 
-            double rotation = Math.atan(0.04 / Math.abs(this.getDeltaMovement().horizontalDistance() * 2)) * 180 / Math.PI;
-            float clampedRotation = (float) Math.min(rotation, 5);
+            double rotationFactor = 0.08;
+            double maxRotation = 10;
+            double rotation = Math.atan(rotationFactor / Math.abs(this.getDeltaMovement().horizontalDistance() * 2)) * 180 / Math.PI;
+            float clampedRotation = (float) Math.min(rotation, maxRotation);
             if (Math.abs(sidewaysInput) == 0) {
                 clampedRotation = 0;
             }
@@ -73,7 +75,8 @@ public abstract class AbstractHorseMixin extends LivingEntity {
 
         double maxSpeedPercent = 1;
         double minSpeedPercent = 0;
-        double acceleration = maxSpeedPercent * 0.06;
+        double accelerationFactor = 0.1;
+        double acceleration = maxSpeedPercent * accelerationFactor;
 
         // acceleration
         if (forwardInput > 0 && mounties$speedPercent < maxSpeedPercent) {
@@ -107,11 +110,11 @@ public abstract class AbstractHorseMixin extends LivingEntity {
     @Override
     public void onPassengerTurned(Entity passenger) {
         super.onPassengerTurned(passenger);
-        this.clampPassengerYaw(passenger);
+        this.clampRotation(passenger);
     }
 
     @Unique
-    private void clampPassengerYaw(Entity entity) {
+    private void clampRotation(Entity entity) {
         entity.setYBodyRot(this.getYRot());
         float f = Mth.wrapDegrees(entity.getYRot() - this.getYRot());
         float g = Mth.clamp(f, -150.0F, 150.0F);
