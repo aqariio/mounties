@@ -1,10 +1,18 @@
 package aqario.mounties.mixin;
 
-
+import aqario.mounties.common.config.MountiesConfig;
+import aqario.mounties.common.network.ServerboundHorseRearUpPayload;
+import aqario.mounties.common.util.HorseControl;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Holder;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -15,10 +23,13 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.function.IntUnaryOperator;
+
 @Mixin(value = AbstractHorse.class, priority = 1001)
-public abstract class AbstractHorseMixin extends LivingEntity {
+public abstract class AbstractHorseMixin extends LivingEntity implements HorseControl {
     @Shadow
     protected float playerJumpPendingScale;
     @Shadow
@@ -28,7 +39,7 @@ public abstract class AbstractHorseMixin extends LivingEntity {
     private double mounties$speedPercent = 0F;
 
     @Unique
-    private boolean mounties$backKeyHeld = false;
+    private boolean mounties$prevJump = false;
 
     protected AbstractHorseMixin(EntityType<? extends LivingEntity> type, Level level) {
         super(type, level);
@@ -43,78 +54,110 @@ public abstract class AbstractHorseMixin extends LivingEntity {
     @Shadow
     public abstract void makeMad();
 
-//    @Inject(at = @At(value = "HEAD"), method = "getChildHealthBonus", cancellable = true)
-//    private static void mounties$modifyMaxHealth(IntUnaryOperator randomIntGetter, CallbackInfoReturnable<Float> cir) {
-//        cir.setReturnValue(40.0F + (float) randomIntGetter.applyAsInt(8) + (float) randomIntGetter.applyAsInt(9));
-//    }
+    @Override
+    public double mounties$speedPercent() {
+        return mounties$speedPercent;
+    }
 
-    @Inject(at = @At(value = "HEAD"), method = "getRiddenRotation", cancellable = true)
+    @Override
+    public boolean mounties$prevJump() {
+        return mounties$prevJump;
+    }
+
+    @Inject(method = "generateMaxHealth", at = @At("HEAD"), cancellable = true)
+    private static void mounties$modifyMaxHealth(IntUnaryOperator randomIntGetter, CallbackInfoReturnable<Float> cir) {
+        cir.setReturnValue((float) MountiesConfig.horseMaxHealth);
+    }
+
+    @Inject(method = "setOffspringAttribute", at = @At("HEAD"), cancellable = true)
+    private static void mounties$setOffspringMaxHealth(
+        AgeableMob ageableMob,
+        AbstractHorse abstractHorse,
+        Holder<Attribute> attribute,
+        double min,
+        double max,
+        CallbackInfo ci
+    ) {
+        if(attribute == Attributes.MAX_HEALTH) {
+            abstractHorse.getAttribute(attribute).setBaseValue(MountiesConfig.horseMaxHealth);
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "getRiddenRotation", at = @At("HEAD"), cancellable = true)
     private void mounties$customRotationControl(LivingEntity primaryPassenger, CallbackInfoReturnable<Vec2> cir) {
-        if (primaryPassenger instanceof Player player) {
+        if(primaryPassenger instanceof Player player) {
             float sidewaysInput = -Math.signum(player.xxa);
 
             double rotationFactor = 0.08;
             double maxRotation = 10;
             double rotation = Math.atan(rotationFactor / Math.abs(this.getDeltaMovement().horizontalDistance() * 2)) * 180 / Math.PI;
             float clampedRotation = (float) Math.min(rotation, maxRotation);
-            if (Math.abs(sidewaysInput) == 0) {
+            if(Math.abs(sidewaysInput) == 0) {
                 clampedRotation = 0;
             }
 
-            cir.setReturnValue(new Vec2(primaryPassenger.getXRot() * 0.5F, this.getYRot() + clampedRotation * sidewaysInput));
+            cir.setReturnValue(new Vec2(0.0F, this.getYRot() + clampedRotation * sidewaysInput));
         }
     }
 
-    @Inject(at = @At(value = "HEAD"), method = "getRiddenInput", cancellable = true)
+    @Inject(method = "getRiddenInput", at = @At("HEAD"), cancellable = true)
     private void mounties$customAccelerationControl(Player player, Vec3 input, CallbackInfoReturnable<Vec3> cir) {
-        if (!this.level().isClientSide() || this.onGround() && this.playerJumpPendingScale == 0.0F && this.isStanding() && !this.allowStandSliding) {
+        if(this.onGround() && this.playerJumpPendingScale == 0.0F && this.isStanding() && !this.allowStandSliding) {
             cir.setReturnValue(Vec3.ZERO);
             return;
         }
         float forwardInput = Math.signum(player.zza);
 
+        // percentage of horse's max speed
         double maxSpeedPercent = 1;
         double minSpeedPercent = 0;
         double accelerationFactor = 0.1;
         double acceleration = maxSpeedPercent * accelerationFactor;
 
         // acceleration
-        if (forwardInput > 0 && mounties$speedPercent < maxSpeedPercent) {
+        if(forwardInput > 0 && mounties$speedPercent < maxSpeedPercent) {
             mounties$speedPercent = Math.min(maxSpeedPercent, mounties$speedPercent + acceleration / (1 + mounties$speedPercent * 4));
         }
         // deceleration
-        else if (forwardInput < 0 && mounties$speedPercent > -minSpeedPercent) {
-            mounties$speedPercent = Math.max(-minSpeedPercent, mounties$speedPercent - acceleration / (1 + mounties$speedPercent / 5));
+        else if(forwardInput < 0 && mounties$speedPercent > minSpeedPercent) {
+            mounties$speedPercent = Math.max(minSpeedPercent, mounties$speedPercent - acceleration / (1 + mounties$speedPercent / 5));
         }
 
         // epsilon check
-        if (Math.abs(mounties$speedPercent) < 0.05) {
+        if(Math.abs(mounties$speedPercent) < 0.05) {
             mounties$speedPercent *= 0.95;
         }
-        // another clamp just to be safe
-        mounties$speedPercent = Math.max(mounties$speedPercent, 0);
-        if (forwardInput >= 0) {
-            mounties$backKeyHeld = false;
-        }
-        // TODO: fix this
-        if (forwardInput < 0 && !mounties$backKeyHeld) {
-            mounties$backKeyHeld = true;
-            if (mounties$speedPercent <= 0 && !this.isStanding()) {
-                this.makeMad();
+        if(player instanceof LocalPlayer client) {
+            if(!client.input.keyPresses.jump()) {
+                mounties$prevJump = false;
+            }
+            // rear up when back is held and jump is pressed
+            if(forwardInput < 0 && client.input.keyPresses.jump() && !mounties$prevJump) {
+                mounties$prevJump = true;
+                if(mounties$speedPercent == 0 && !this.isStanding()) {
+                    // send rear up packet
+                    ClientPlayNetworking.send(new ServerboundHorseRearUpPayload());
+                }
             }
         }
 
-        cir.setReturnValue(new Vec3(0, 0, mounties$speedPercent));
+        if(this.level().isClientSide()) {
+            cir.setReturnValue(new Vec3(0, 0, mounties$speedPercent));
+        }
+        else {
+            cir.setReturnValue(Vec3.ZERO);
+        }
     }
 
     @Override
     public void onPassengerTurned(Entity passenger) {
         super.onPassengerTurned(passenger);
-        this.clampRotation(passenger);
+        this.mounties$clampRotation(passenger);
     }
 
     @Unique
-    private void clampRotation(Entity entity) {
+    private void mounties$clampRotation(Entity entity) {
         entity.setYBodyRot(this.getYRot());
         float f = Mth.wrapDegrees(entity.getYRot() - this.getYRot());
         float g = Mth.clamp(f, -150.0F, 150.0F);
