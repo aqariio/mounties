@@ -1,4 +1,4 @@
-package aqario.mounties.mixin;
+package aqario.equine.mixin;
 
 import net.minecraft.core.Holder;
 import net.minecraft.world.entity.Entity;
@@ -35,7 +35,7 @@ public abstract class LivingEntityMixin extends Entity {
     }
 
     @Inject(method = "travelRidden", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;travel(Lnet/minecraft/world/phys/Vec3;)V"))
-    private void mounties$stepDownwards(Player player, Vec3 input, CallbackInfo ci) {
+    private void equine$stepDownwards(Player player, Vec3 input, CallbackInfo ci) {
         LivingEntity entity = (LivingEntity) (Object) this;
         if (entity instanceof AbstractHorse
             && this.getControllingPassenger() instanceof Player
@@ -46,7 +46,7 @@ public abstract class LivingEntityMixin extends Entity {
     }
 
     @Inject(method = "getFlyingSpeed", at = @At("RETURN"), cancellable = true)
-    private void mounties$increaseAirSpeed(CallbackInfoReturnable<Float> cir) {
+    private void equine$increaseAirSpeed(CallbackInfoReturnable<Float> cir) {
         LivingEntity entity = (LivingEntity) (Object) this;
         if (entity instanceof AbstractHorse && this.getControllingPassenger() instanceof Player) {
             cir.setReturnValue(entity.getSpeed() * 0.216f);
@@ -54,7 +54,7 @@ public abstract class LivingEntityMixin extends Entity {
     }
 
     @Redirect(method = "travelInWater", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getAttributeValue(Lnet/minecraft/core/Holder;)D"))
-    private double mounties$modifySwimSpeed(LivingEntity entity, Holder<Attribute> attribute) {
+    private double equine$modifySwimSpeed(LivingEntity entity, Holder<Attribute> attribute) {
         if (entity instanceof AbstractHorse && entity.onGround() && !entity.isUnderWater()) {
             return 0.8;
         }
@@ -62,7 +62,7 @@ public abstract class LivingEntityMixin extends Entity {
     }
 
     @Inject(method = "floatInWaterWhileRidden", at = @At("HEAD"), cancellable = true)
-    private void mounties$onlySwimWhenUnsupported(CallbackInfo ci) {
+    private void equine$onlySwimWhenUnsupported(CallbackInfo ci) {
         LivingEntity entity = (LivingEntity) (Object) this;
         if (entity instanceof AbstractHorse
             && !entity.isUnderWater()

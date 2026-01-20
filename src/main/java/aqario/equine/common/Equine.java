@@ -1,7 +1,7 @@
-package aqario.mounties.common;
+package aqario.equine.common;
 
-import aqario.mounties.common.config.MountiesConfig;
-import aqario.mounties.common.network.ServerboundHorseRearUpPayload;
+import aqario.equine.common.config.EquineConfig;
+import aqario.equine.common.network.ServerboundHorseRearUpPayload;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -11,9 +11,9 @@ import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Mounties implements ModInitializer {
-    public static final Logger LOGGER = LoggerFactory.getLogger("Mounties");
-    public static final String ID = "mounties";
+public class Equine implements ModInitializer {
+    public static final Logger LOGGER = LoggerFactory.getLogger("Equine");
+    public static final String ID = "equine";
 
     public static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath(ID, path);
@@ -21,8 +21,8 @@ public class Mounties implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        LOGGER.info("Loading Mounties");
-        MountiesConfig.init(ID, MountiesConfig.class);
+        LOGGER.info("Loading Equine");
+        EquineConfig.init(ID, EquineConfig.class);
         PayloadTypeRegistry.playC2S().register(
             ServerboundHorseRearUpPayload.TYPE,
             ServerboundHorseRearUpPayload.STREAM_CODEC

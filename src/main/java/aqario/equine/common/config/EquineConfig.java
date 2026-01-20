@@ -1,8 +1,8 @@
-package aqario.mounties.common.config;
+package aqario.equine.common.config;
 
 import eu.midnightdust.lib.config.MidnightConfig;
 
-public class MountiesConfig extends MidnightConfig {
+public class EquineConfig extends MidnightConfig {
     @Entry
     public static boolean removeLeavesCollision = true;
     @Entry

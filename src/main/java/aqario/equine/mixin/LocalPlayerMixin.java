@@ -1,6 +1,6 @@
-package aqario.mounties.mixin;
+package aqario.equine.mixin;
 
-import aqario.mounties.common.util.HorseControl;
+import aqario.equine.common.util.HorseControl;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -21,10 +21,10 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     }
 
     @ModifyExpressionValue(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/PlayerRideableJumping;getJumpCooldown()I"))
-    private int mounties$blockJumpWhenRearing(int original) {
+    private int equine$blockJumpWhenRearing(int original) {
         if(this.getVehicle() instanceof HorseControl horse) {
             if(this.input.keyPresses.backward()
-                && horse.mounties$speedPercent() == 0
+                && horse.equine$speedPercent() == 0
             ) {
                 return -10;
             }

@@ -1,6 +1,6 @@
-package aqario.mounties.common.network;
+package aqario.equine.common.network;
 
-import aqario.mounties.common.Mounties;
+import aqario.equine.common.Equine;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -11,7 +11,7 @@ public class ServerboundHorseRearUpPayload implements CustomPacketPayload {
         }, object -> new ServerboundHorseRearUpPayload()
     );
     public static final CustomPacketPayload.Type<ServerboundHorseRearUpPayload> TYPE = new CustomPacketPayload.Type<>(
-        Mounties.id("horse_rear_up")
+        Equine.id("horse_rear_up")
     );
 
     @Override

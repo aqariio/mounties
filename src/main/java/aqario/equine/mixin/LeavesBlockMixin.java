@@ -1,6 +1,6 @@
-package aqario.mounties.mixin;
+package aqario.equine.mixin;
 
-import aqario.mounties.common.config.MountiesConfig;
+import aqario.equine.common.config.EquineConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -28,7 +28,7 @@ public abstract class LeavesBlockMixin extends Block implements SimpleWaterlogge
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        if (!MountiesConfig.removeLeavesCollision) {
+        if (!EquineConfig.removeLeavesCollision) {
             return super.getCollisionShape(state, level, pos, context);
         }
         if (context instanceof EntityCollisionContext entityContext) {
@@ -52,7 +52,7 @@ public abstract class LeavesBlockMixin extends Block implements SimpleWaterlogge
         InsideBlockEffectApplier insideBlockEffectApplier,
         boolean bl
     ) {
-        if (!MountiesConfig.removeLeavesCollision) {
+        if (!EquineConfig.removeLeavesCollision) {
             return;
         }
         if (entity instanceof Player player && player.getAbilities().flying) {

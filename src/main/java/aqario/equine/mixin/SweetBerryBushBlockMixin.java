@@ -1,4 +1,4 @@
-package aqario.mounties.mixin;
+package aqario.equine.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(SweetBerryBushBlock.class)
 public class SweetBerryBushBlockMixin {
     @Inject(method = "entityInside", at = @At("HEAD"), cancellable = true)
-    public void mounties$removeBerryBushDamage(
+    public void equine$removeBerryBushDamage(
         BlockState blockState,
         Level level,
         BlockPos blockPos,

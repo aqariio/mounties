@@ -1,4 +1,4 @@
-# Mounties
+# Equine
 
 - Modified controls for horses, using left and right to turn, and forward and backward to accelerate and decelerate. (similar to games like Mount & Blade and Kingdom Come: Deliverance)
 - Pressing back and then jump will make the horse rear up

@@ -1,8 +1,8 @@
-package aqario.mounties.mixin;
+package aqario.equine.mixin;
 
-import aqario.mounties.common.config.MountiesConfig;
-import aqario.mounties.common.network.ServerboundHorseRearUpPayload;
-import aqario.mounties.common.util.HorseControl;
+import aqario.equine.common.config.EquineConfig;
+import aqario.equine.common.network.ServerboundHorseRearUpPayload;
+import aqario.equine.common.util.HorseControl;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
@@ -36,10 +36,10 @@ public abstract class AbstractHorseMixin extends LivingEntity implements HorseCo
     protected boolean allowStandSliding;
 
     @Unique
-    private double mounties$speedPercent = 0F;
+    private double equine$speedPercent = 0F;
 
     @Unique
-    private boolean mounties$prevJump = false;
+    private boolean equine$prevJump = false;
 
     protected AbstractHorseMixin(EntityType<? extends LivingEntity> type, Level level) {
         super(type, level);
@@ -52,22 +52,22 @@ public abstract class AbstractHorseMixin extends LivingEntity implements HorseCo
     public abstract boolean isStanding();
 
     @Override
-    public double mounties$speedPercent() {
-        return mounties$speedPercent;
+    public double equine$speedPercent() {
+        return equine$speedPercent;
     }
 
     @Override
-    public boolean mounties$prevJump() {
-        return mounties$prevJump;
+    public boolean equine$prevJump() {
+        return equine$prevJump;
     }
 
     @Inject(method = "generateMaxHealth", at = @At("HEAD"), cancellable = true)
-    private static void mounties$modifyMaxHealth(IntUnaryOperator randomIntGetter, CallbackInfoReturnable<Float> cir) {
-        cir.setReturnValue((float) MountiesConfig.horseMaxHealth);
+    private static void equine$modifyMaxHealth(IntUnaryOperator randomIntGetter, CallbackInfoReturnable<Float> cir) {
+        cir.setReturnValue((float) EquineConfig.horseMaxHealth);
     }
 
     @Inject(method = "setOffspringAttribute", at = @At("HEAD"), cancellable = true)
-    private static void mounties$setOffspringMaxHealth(
+    private static void equine$setOffspringMaxHealth(
         AgeableMob ageableMob,
         AbstractHorse abstractHorse,
         Holder<Attribute> attribute,
@@ -76,13 +76,13 @@ public abstract class AbstractHorseMixin extends LivingEntity implements HorseCo
         CallbackInfo ci
     ) {
         if(attribute == Attributes.MAX_HEALTH) {
-            abstractHorse.getAttribute(attribute).setBaseValue(MountiesConfig.horseMaxHealth);
+            abstractHorse.getAttribute(attribute).setBaseValue(EquineConfig.horseMaxHealth);
             ci.cancel();
         }
     }
 
     @Inject(method = "getRiddenRotation", at = @At("HEAD"), cancellable = true)
-    private void mounties$customRotationControl(LivingEntity primaryPassenger, CallbackInfoReturnable<Vec2> cir) {
+    private void equine$customRotationControl(LivingEntity primaryPassenger, CallbackInfoReturnable<Vec2> cir) {
         if(primaryPassenger instanceof Player player) {
             float sidewaysInput = -Math.signum(player.xxa);
 
@@ -99,7 +99,7 @@ public abstract class AbstractHorseMixin extends LivingEntity implements HorseCo
     }
 
     @Inject(method = "getRiddenInput", at = @At("HEAD"), cancellable = true)
-    private void mounties$customAccelerationControl(Player player, Vec3 input, CallbackInfoReturnable<Vec3> cir) {
+    private void equine$customAccelerationControl(Player player, Vec3 input, CallbackInfoReturnable<Vec3> cir) {
         if(this.onGround() && this.playerJumpPendingScale == 0.0F && this.isStanding() && !this.allowStandSliding) {
             cir.setReturnValue(Vec3.ZERO);
             return;
@@ -113,26 +113,26 @@ public abstract class AbstractHorseMixin extends LivingEntity implements HorseCo
         double acceleration = maxSpeedPercent * accelerationFactor;
 
         // acceleration
-        if(forwardInput > 0 && mounties$speedPercent < maxSpeedPercent) {
-            mounties$speedPercent = Math.min(maxSpeedPercent, mounties$speedPercent + acceleration / (1 + mounties$speedPercent * 4));
+        if(forwardInput > 0 && equine$speedPercent < maxSpeedPercent) {
+            equine$speedPercent = Math.min(maxSpeedPercent, equine$speedPercent + acceleration / (1 + equine$speedPercent * 4));
         }
         // deceleration
-        else if(forwardInput < 0 && mounties$speedPercent > minSpeedPercent) {
-            mounties$speedPercent = Math.max(minSpeedPercent, mounties$speedPercent - acceleration / (1 + mounties$speedPercent / 5));
+        else if(forwardInput < 0 && equine$speedPercent > minSpeedPercent) {
+            equine$speedPercent = Math.max(minSpeedPercent, equine$speedPercent - acceleration / (1 + equine$speedPercent / 5));
         }
 
         // epsilon check
-        if(Math.abs(mounties$speedPercent) < 0.05) {
-            mounties$speedPercent *= 0.95;
+        if(Math.abs(equine$speedPercent) < 0.05) {
+            equine$speedPercent *= 0.95;
         }
         if(player instanceof LocalPlayer client) {
             if(!client.input.keyPresses.jump()) {
-                mounties$prevJump = false;
+                equine$prevJump = false;
             }
             // rear up when back is held and jump is pressed
-            if(forwardInput < 0 && client.input.keyPresses.jump() && !mounties$prevJump) {
-                mounties$prevJump = true;
-                if(mounties$speedPercent == 0 && !this.isStanding()) {
+            if(forwardInput < 0 && client.input.keyPresses.jump() && !equine$prevJump) {
+                equine$prevJump = true;
+                if(equine$speedPercent == 0 && !this.isStanding()) {
                     // send rear up packet
                     ClientPlayNetworking.send(new ServerboundHorseRearUpPayload());
                 }
@@ -140,7 +140,7 @@ public abstract class AbstractHorseMixin extends LivingEntity implements HorseCo
         }
 
         if(this.level().isClientSide()) {
-            cir.setReturnValue(new Vec3(0, 0, mounties$speedPercent));
+            cir.setReturnValue(new Vec3(0, 0, equine$speedPercent));
         }
         else {
             cir.setReturnValue(Vec3.ZERO);
@@ -150,11 +150,11 @@ public abstract class AbstractHorseMixin extends LivingEntity implements HorseCo
     @Override
     public void onPassengerTurned(Entity passenger) {
         super.onPassengerTurned(passenger);
-        this.mounties$clampRotation(passenger);
+        this.equine$clampRotation(passenger);
     }
 
     @Unique
-    private void mounties$clampRotation(Entity entity) {
+    private void equine$clampRotation(Entity entity) {
         entity.setYBodyRot(this.getYRot());
         float f = Mth.wrapDegrees(entity.getYRot() - this.getYRot());
         float g = Mth.clamp(f, -150.0F, 150.0F);

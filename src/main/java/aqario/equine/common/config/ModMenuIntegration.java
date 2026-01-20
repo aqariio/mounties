@@ -1,6 +1,6 @@
-package aqario.mounties.common.config;
+package aqario.equine.common.config;
 
-import aqario.mounties.common.Mounties;
+import aqario.equine.common.Equine;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import eu.midnightdust.lib.config.MidnightConfig;
@@ -9,7 +9,7 @@ import eu.midnightdust.lib.config.MidnightConfig;
 public class ModMenuIntegration implements ModMenuApi {
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return parent -> MidnightConfig.getScreen(parent, Mounties.ID);
+        return parent -> MidnightConfig.getScreen(parent, Equine.ID);
     }
 }
 
