@@ -125,7 +125,7 @@ public abstract class AbstractHorseMixin extends LivingEntity implements HorseCo
         if(Math.abs(equine$speedPercent) < 0.05) {
             equine$speedPercent *= 0.95;
         }
-        if(player instanceof LocalPlayer client) {
+        if(player.isLocalPlayer() && player instanceof LocalPlayer client) {
             if(!client.input.keyPresses.jump()) {
                 equine$prevJump = false;
             }
