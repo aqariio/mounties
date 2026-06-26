@@ -7,8 +7,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 public class ServerboundHorseRearUpPayload implements CustomPacketPayload {
     public static final StreamCodec<FriendlyByteBuf, ServerboundHorseRearUpPayload> STREAM_CODEC = CustomPacketPayload.codec(
-        (object, object2) -> {
-        }, object -> new ServerboundHorseRearUpPayload()
+        (_, _) -> {
+        }, _ -> new ServerboundHorseRearUpPayload()
     );
     public static final CustomPacketPayload.Type<ServerboundHorseRearUpPayload> TYPE = new CustomPacketPayload.Type<>(
         Equine.id("horse_rear_up")

@@ -23,13 +23,13 @@ public class Equine implements ModInitializer {
     public void onInitialize() {
         LOGGER.info("Loading Equine");
         EquineConfig.init(ID, EquineConfig.class);
-        PayloadTypeRegistry.playC2S().register(
+        PayloadTypeRegistry.serverboundPlay().register(
             ServerboundHorseRearUpPayload.TYPE,
             ServerboundHorseRearUpPayload.STREAM_CODEC
         );
         ServerPlayNetworking.registerGlobalReceiver(
             ServerboundHorseRearUpPayload.TYPE,
-            (payload, context) -> {
+            (_, context) -> {
                 ServerPlayer player = context.player();
                 if(player.getControlledVehicle() instanceof AbstractHorse horse) {
                     horse.makeMad();

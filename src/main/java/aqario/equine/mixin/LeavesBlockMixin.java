@@ -3,7 +3,7 @@ package aqario.equine.mixin;
 import aqario.equine.common.config.EquineConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -58,7 +58,7 @@ public abstract class LeavesBlockMixin extends Block implements SimpleWaterlogge
         if (entity instanceof Player player && player.getAbilities().flying) {
             return;
         }
-        if (entity instanceof LivingEntity && entity.getType() != EntityType.FOX && entity.getType() != EntityType.BEE) {
+        if (entity instanceof LivingEntity && entity.getType() != EntityTypes.FOX && entity.getType() != EntityTypes.BEE) {
             entity.setDeltaMovement(entity.getDeltaMovement().multiply(new Vec3(0.9, 0.9, 0.9)));
         }
     }
